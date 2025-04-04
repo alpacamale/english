@@ -112,8 +112,8 @@ class VttTimestampOutputParser(BaseOutputParser):
                         "text": caption.strip(),
                     }
                 )
-            elif "WEBVTT" in line:
-                offset = parse_timestamp(end.strip()) + offset
+            elif "WEBVTT" in line and i != 0:
+                offset += parse_timestamp(end.strip())
         return result
 
 
