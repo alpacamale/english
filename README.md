@@ -19,10 +19,14 @@
 사용자가 업로드한 `.txt` 파일에서
 OpenAI GPT 모델을 활용해 **영어 빈칸 사지선다형 퀴즈 5문제**를 자동 생성하는 웹 애플리케이션입니다.
 
-### - 주요 기능
+### - 주요 기
 
 이 프로젝트는 Python + Streamlit + LangChain + OpenAI GPT를 활용하여  
 텍스트 파일을 입력으로 받아 영어 빈칸 퀴즈를 자동 생성하고 풀 수 있는 인터랙티브 앱입니다.
+
+* Streamlit
+* LangChain
+* OpenAI GPT-4o-mini
 
 ### - 사용 예시
 
