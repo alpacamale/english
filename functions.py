@@ -7,6 +7,7 @@ from tqdm import tqdm
 import openai
 from langchain.schema.output_parser import BaseOutputParser
 from datetime import timedelta
+import json
 
 
 def get_video_id(url: str) -> str:
@@ -19,9 +20,18 @@ def get_video_dir(video_id: str) -> str:
 
 def download_youtube_video(url: str) -> None:
     video_id = get_video_id(url)
-    if not os.path.exists(get_video_dir(video_id)):
+    video_dir = get_video_dir(video_id)
+    if not os.path.exists(video_dir):
         command = ["yt-dlp", "-o", f"files/{video_id}/video.%(ext)s", url]
         subprocess.run(command)
+
+        command = ["yt-dlp", "--get-title", url]
+        title = subprocess.run(
+            command, stdout=subprocess.PIPE, text=True
+        ).stdout.strip()
+        with open(f"{video_dir}/meta.json", "w") as f:
+            metadata = json.dumps({"title": title})
+            f.write(metadata)
 
 
 def get_video_path(video_dir: str) -> str:
