@@ -154,7 +154,7 @@ def get_video_ids() -> list[str]:
     return [video_path.lstrip("files/") for video_path in glob("files/*")]
 
 
-def get_video_name_map() -> list[str]:
+def get_video_name_map() -> dict:
     video_ids = get_video_ids()
     return {get_video_name(video_id): video_id for video_id in video_ids}
 
