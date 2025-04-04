@@ -97,7 +97,7 @@ def parse_timestamp(ts: str) -> timedelta:
 
 
 class VttTimestampOutputParser(BaseOutputParser):
-    def parse(self, text: str, time: int = 10) -> list[dict]:
+    def parse(self, text: str) -> list[dict]:
         lines = text.strip().splitlines()
         result = []
         offset = timedelta(minutes=0)
@@ -112,13 +112,13 @@ class VttTimestampOutputParser(BaseOutputParser):
                         "text": caption.strip(),
                     }
                 )
-            elif "WEBVTT" in line and i != 0:
-                offset += timedelta(minutes=time)
+            elif "WEBVTT" in line:
+                offset = parse_timestamp(end.strip()) + offset
         return result
 
 
 class VttOutputParser(BaseOutputParser):
-    def parse(self, text: str, time: int = 10) -> list[dict]:
+    def parse(self, text: str) -> list[dict]:
         lines = text.strip().splitlines()
         result = []
         for i, line in enumerate(lines):
