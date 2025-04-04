@@ -1,16 +1,10 @@
 import streamlit as st
 from functions import *
 from langchain.document_loaders import TextLoader
-from datetime import datetime
-
-
-video_id = "MS5UjNKw_1M"
-video_dir = get_video_dir(video_id)
-video_path = get_video_path(video_dir)
 
 
 @st.cache_data(show_spinner="Loading text ...")
-def load_text(video_id):
+def load_text(video_id: str) -> list[dict]:
     video_dir = get_video_dir(video_id)
     transcript_path = get_transcript_path(video_dir)
     loader = TextLoader(transcript_path)
@@ -19,6 +13,40 @@ def load_text(video_id):
     text = docs[0].page_content
     return parser.parse(text)
 
+
+def select_video() -> tuple[str, str, str]:
+    """
+    Return video metadata
+
+    Returns:
+        - video_id (str): The video id what user selected via name
+        - video_dir (str): The directory path where the video is stored
+        - video_path (str): The full file path to the video
+    """
+    video_names = get_video_names()
+    video_name_map = get_video_name_map()
+    video_name = st.selectbox("Select videos what you want to see", video_names)
+    if video_name != st.session_state["video_name"]:
+        st.session_state.update(
+            {
+                "start_time": 0,
+                "end_time": None,
+                "loop": False,
+                "record": False,
+                "video_name": video_name,
+            }
+        )
+    video_id = video_name_map[video_name]
+    video_dir = get_video_dir(video_id)
+    video_path = get_video_path(video_dir)
+    return video_id, video_dir, video_path
+
+
+title = "Mocking bird"
+st.set_page_config(
+    page_icon="🦜",
+    page_title=title,
+)
 
 if "initial" not in st.session_state:
     st.session_state.update(
@@ -29,14 +57,12 @@ if "initial" not in st.session_state:
             "loop": False,
             "caption": True,
             "record": False,
+            "video_name": None,
         }
     )
 
-title = "Mocking bird"
-st.set_page_config(
-    page_icon="🦜",
-    page_title=title,
-)
+video_id, video_dir, video_path = select_video()
+
 st.title(title)
 st.video(
     video_path,
