@@ -136,3 +136,19 @@ class VttOutputParser(BaseOutputParser):
                 caption = lines[i + 1] if i + 1 < len(lines) else ""
                 result.append(caption)
         return " ".join(result)
+
+
+def get_metadata_path(video_id: str) -> str:
+    video_dir = get_video_dir(video_id)
+    return f"{video_dir}/meta.json"
+
+
+def get_video_name(video_id: str) -> str:
+    metadata_path = get_metadata_path(video_id)
+    with open(metadata_path, "r") as f:
+        result = json.loads(f.read())
+    return result["title"]
+
+
+def get_video_ids() -> list[str]:
+    return [video_path.lstrip("files/") for video_path in glob("files/*")]
