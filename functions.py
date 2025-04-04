@@ -157,3 +157,8 @@ def get_video_ids() -> list[str]:
 def get_video_name_map() -> list[str]:
     video_ids = get_video_ids()
     return {get_video_name(video_id): video_id for video_id in video_ids}
+
+
+def get_video_names() -> list[str]:
+    video_ids = get_video_ids()
+    return [get_video_name(video_id) for video_id in video_ids]
