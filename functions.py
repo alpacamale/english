@@ -8,6 +8,12 @@ import openai
 from langchain.schema.output_parser import BaseOutputParser
 from datetime import timedelta
 import json
+import secrets
+
+
+def initial_server() -> None:
+    os.makedirs("files", exist_ok=True)
+    os.makedirs(".cache", exist_ok=True)
 
 
 def get_video_id(url: str) -> str:
@@ -35,7 +41,7 @@ def download_youtube_video(url: str) -> None:
 
 
 def get_video_path(video_dir: str) -> str:
-    extensions = ["mp4", "avi", "webm"]
+    extensions = ["mp4", "avi", "mov", "webm"]
     files = glob(f"{video_dir}/*.*")
     return next((file for file in files if file.split(".")[-1] in extensions), None)
 
@@ -162,3 +168,26 @@ def get_video_name_map() -> dict:
 def get_video_names() -> list[str]:
     video_ids = get_video_ids()
     return [get_video_name(video_id) for video_id in video_ids]
+
+
+def get_tmp_path(video_name):
+    return f"./.cache/{video_name}"
+
+
+def generate_video_id(length: int = 11) -> str:
+    token = secrets.token_urlsafe(8)
+    return token[:length]
+
+
+def move_permenent_dir(video_name: str, video_id: str) -> None:
+    tmp_path = get_tmp_path(video_name)
+    video_dir = get_video_dir(video_id)
+    os.makedirs(video_dir, exist_ok=True)
+    title, ext = video_name.split(".")
+    video_path = f"{video_dir}/video.{ext}"
+    if not os.path.exists(video_path):
+        command = ["mv", tmp_path, video_path]
+        subprocess.run(command)
+        with open(f"{video_dir}/meta.json", "w") as f:
+            metadata = json.dumps({"title": title})
+            f.write(metadata)
