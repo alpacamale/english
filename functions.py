@@ -7,6 +7,13 @@ from tqdm import tqdm
 import openai
 from langchain.schema.output_parser import BaseOutputParser
 from datetime import timedelta
+import json
+import secrets
+
+
+def initial_server() -> None:
+    os.makedirs("files", exist_ok=True)
+    os.makedirs(".cache", exist_ok=True)
 
 
 def get_video_id(url: str) -> str:
@@ -19,13 +26,22 @@ def get_video_dir(video_id: str) -> str:
 
 def download_youtube_video(url: str) -> None:
     video_id = get_video_id(url)
-    if not os.path.exists(get_video_dir(video_id)):
+    video_dir = get_video_dir(video_id)
+    if not os.path.exists(video_dir):
         command = ["yt-dlp", "-o", f"files/{video_id}/video.%(ext)s", url]
         subprocess.run(command)
 
+        command = ["yt-dlp", "--get-title", url]
+        title = subprocess.run(
+            command, stdout=subprocess.PIPE, text=True
+        ).stdout.strip()
+        with open(f"{video_dir}/meta.json", "w") as f:
+            metadata = json.dumps({"title": title})
+            f.write(metadata)
+
 
 def get_video_path(video_dir: str) -> str:
-    extensions = ["mp4", "avi", "webm"]
+    extensions = ["mp4", "avi", "mov", "webm"]
     files = glob(f"{video_dir}/*.*")
     return next((file for file in files if file.split(".")[-1] in extensions), None)
 
@@ -96,8 +112,8 @@ def parse_timestamp(ts: str) -> timedelta:
     )
 
 
-class VttOutputParser(BaseOutputParser):
-    def parse(self, text: str, time: int = 10) -> list[dict]:
+class VttTimestampOutputParser(BaseOutputParser):
+    def parse(self, text: str) -> list[dict]:
         lines = text.strip().splitlines()
         result = []
         offset = timedelta(minutes=0)
@@ -113,5 +129,65 @@ class VttOutputParser(BaseOutputParser):
                     }
                 )
             elif "WEBVTT" in line and i != 0:
-                offset += timedelta(minutes=time)
+                offset += parse_timestamp(end.strip())
         return result
+
+
+class VttOutputParser(BaseOutputParser):
+    def parse(self, text: str) -> list[dict]:
+        lines = text.strip().splitlines()
+        result = []
+        for i, line in enumerate(lines):
+            if "-->" in line:
+                caption = lines[i + 1] if i + 1 < len(lines) else ""
+                result.append(caption)
+        return " ".join(result)
+
+
+def get_metadata_path(video_id: str) -> str:
+    video_dir = get_video_dir(video_id)
+    return f"{video_dir}/meta.json"
+
+
+def get_video_name(video_id: str) -> str:
+    metadata_path = get_metadata_path(video_id)
+    with open(metadata_path, "r") as f:
+        result = json.loads(f.read())
+    return result["title"]
+
+
+def get_video_ids() -> list[str]:
+    return [video_path.lstrip("files/") for video_path in glob("files/*")]
+
+
+def get_video_name_map() -> dict:
+    video_ids = get_video_ids()
+    return {get_video_name(video_id): video_id for video_id in video_ids}
+
+
+def get_video_names() -> list[str]:
+    video_ids = get_video_ids()
+    return [get_video_name(video_id) for video_id in video_ids]
+
+
+def get_tmp_path(video_name):
+    return f"./.cache/{video_name}"
+
+
+def generate_video_id(length: int = 11) -> str:
+    token = secrets.token_urlsafe(8)
+    return token[:length]
+
+
+def move_permenent_dir(video_name: str, video_id: str) -> None:
+    tmp_path = get_tmp_path(video_name)
+    video_dir = get_video_dir(video_id)
+    os.makedirs(video_dir, exist_ok=True)
+    title, ext = video_name.split(".")
+    video_path = f"{video_dir}/video.{ext}"
+    if not os.path.exists(video_path):
+        command = ["mv", tmp_path, video_path]
+        subprocess.run(command)
+        with open(f"{video_dir}/meta.json", "w") as f:
+            metadata = json.dumps({"title": title})
+            f.write(metadata)
