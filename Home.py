@@ -1,4 +1,5 @@
 import streamlit as st
+from functions import initial_server
 
 title = "Shadow Home"
 
@@ -19,3 +20,5 @@ st.markdown(
     To proceed, upload the media or input youtube url.
     """
 )
+
+initial_server()
