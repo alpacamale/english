@@ -1,7 +1,7 @@
 import streamlit as st
 from functions import *
 from langchain.document_loaders import TextLoader
-from st_audiorec import st_audiorec
+# from st_audiorec import st_audiorec
 
 
 @st.cache_data(show_spinner="Loading text ...")
