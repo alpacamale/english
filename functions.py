@@ -253,7 +253,7 @@ def get_dialog(base_dir: str) -> tuple[str, str]:
 
 
 def dialog_to_text(dialog: list[str]) -> str:
-    return "\n\n".join(dialog)
+    return "\n".join(dialog)
 
 
 def get_correction_rate(audio_dialog: list[str], echo_dialog: list[str]) -> str:
