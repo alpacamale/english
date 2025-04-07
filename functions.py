@@ -46,15 +46,20 @@ def get_echo_chunk_dir(base_dir: str) -> str:
     return f"{base_dir}/media/chunks/echo"
 
 
-def get_transcript_path(base_dir: str) -> str:
-    return f"{base_dir}/transcript.txt"
+def get_audio_transcript_path(base_dir: str) -> str:
+    return f"{base_dir}/audio_transcript.txt"
+
+
+def get_echo_transcript_path(base_dir: str) -> str:
+    return f"{base_dir}/echo_transcript.txt"
 
 
 def get_metadata_path(base_dir: str) -> str:
     return f"{base_dir}/meta.json"
 
 
-def get_video_name(base_dir: str) -> str:
+def get_video_name(video_id: str) -> str:
+    base_dir = get_base_dir(video_id)
     metadata_path = get_metadata_path(base_dir)
     with open(metadata_path, "r") as f:
         result = json.loads(f.read())
@@ -85,7 +90,7 @@ def download_youtube_video(url: str) -> None:
     video_id = get_video_id(url)
     base_dir = get_base_dir(video_id)
     if not os.path.exists(base_dir):
-        command = ["yt-dlp", "-o", f"files/{video_id}/video.%(ext)s", url]
+        command = ["yt-dlp", "-o", f"{base_dir}/media/video.webm", url]
         subprocess.run(command)
         metadata_path = get_metadata_path(base_dir)
         command = ["yt-dlp", "--get-title", url]
@@ -97,8 +102,7 @@ def download_youtube_video(url: str) -> None:
             f.write(metadata)
 
 
-def extract_audio_from_video(video_id: str) -> None:
-    base_dir = get_base_dir(video_id)
+def extract_audio_from_video(base_dir: str) -> None:
     video_path = get_video_path(base_dir)
     audio_path = get_audio_path(base_dir)
     if not os.path.exists(audio_path):
@@ -107,7 +111,7 @@ def extract_audio_from_video(video_id: str) -> None:
 
 
 def cut_audio_in_chunks(source: str, destination: str, chunk_size: int = 10) -> None:
-    # os.makedirs(destination, exist_ok=True)
+    os.makedirs(destination, exist_ok=True)
     track = AudioSegment.from_mp3(source)
     chunk_len = chunk_size * 60 * 1000
     chunks = math.ceil(len(track) / chunk_len)
@@ -119,14 +123,11 @@ def cut_audio_in_chunks(source: str, destination: str, chunk_size: int = 10) -> 
         chunk.export(f"{destination}/chunk_{i}.mp3", format="mp3")
 
 
-def transcribe_chunks(base_dir: str, chunks_dir: str) -> None:
-    transcript_path = get_transcript_path(base_dir)
-    if not os.path.exists(transcript_path):
+def transcribe_chunks(base_dir: str, chunks_dir: str, destination: str) -> None:
+    if not os.path.exists(destination):
         files = glob(f"{chunks_dir}/*")
         for file in tqdm(files, "Transcribing audio chunks"):
-            with open(file, "rb") as audio_file, open(
-                transcript_path, "a"
-            ) as text_file:
+            with open(file, "rb") as audio_file, open(destination, "a") as text_file:
                 transcript = openai.audio.transcriptions.create(
                     model="whisper-1",
                     file=audio_file,
@@ -184,9 +185,8 @@ def generate_video_id(length: int = 11) -> str:
     return token[:length]
 
 
-def move_to_permenent_dir(video_name: str, video_id: str) -> None:
+def move_to_permenent_dir(video_name: str, base_dir: str) -> None:
     tmp_path = get_tmp_path(video_name)
-    base_dir = get_base_dir(video_id)
     os.makedirs(base_dir, exist_ok=True)
     title, ext = video_name.split(".")
     video_path = f"{base_dir}/video.{ext}"
