@@ -98,17 +98,18 @@ else:
 
     if record:
         wav_audio_data = st_audiorec()
-        button = st.button("Transcribe It!")
-        if wav_audio_data is not None and button:
-            with st.status("Loading voice ...") as state:
-                echo_voice_path = get_echo_voice_path(base_dir)
-                with open(echo_voice_path, "wb") as voice:
-                    voice.write(wav_audio_data)
+        if wav_audio_data:
+            button = st.button("Transcribe It!")
+            if button:
+                with st.status("Loading voice ...") as state:
+                    echo_voice_path = get_echo_voice_path(base_dir)
+                    with open(echo_voice_path, "wb") as voice:
+                        voice.write(wav_audio_data)
 
-                state.update(label="Cut audio in chunks ...")
-                chunks_dir = get_echo_chunk_dir(base_dir)
-                cut_audio_in_chunks(echo_voice_path, chunks_dir)
+                    state.update(label="Cut audio in chunks ...")
+                    chunks_dir = get_echo_chunk_dir(base_dir)
+                    cut_audio_in_chunks(echo_voice_path, chunks_dir)
 
-                state.update(label="Transcribe chunks ...")
-                destination = get_echo_transcript_path(base_dir)
-                transcribe_chunks(base_dir, chunks_dir, destination)
+                    state.update(label="Transcribe chunks ...")
+                    destination = get_echo_transcript_path(base_dir)
+                    transcribe_chunks(base_dir, chunks_dir, destination)
