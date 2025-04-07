@@ -191,3 +191,7 @@ def move_permenent_dir(video_name: str, video_id: str) -> None:
         with open(f"{video_dir}/meta.json", "w") as f:
             metadata = json.dumps({"title": title})
             f.write(metadata)
+
+
+def get_echo_voice_path(video_dir: str) -> str:
+    return f"{video_dir}/echo.wav"
