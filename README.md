@@ -1,10 +1,6 @@
 # SESAC mini project
 
-STT와 OpenAI Whisper API를 이용한 AI 언어 학습 프로그램
-
-## Summary
-
-여기를 채워줘
+STT와 OpenAI Whisper API, LangChain을 이용한 AI 언어 학습 프로그램
 
 ## Period
 
@@ -26,9 +22,9 @@ STT와 OpenAI Whisper API를 이용한 AI 언어 학습 프로그램
 - 사용자의 음성을 텍스트로 변환한 후, 비디오의 스크립트와 비교합니다.
 - STT로 인식한 사용자의 음성과 스크립트의 일치하는 정도를 퍼센트(%)로 확인하고, 실제로 생성된 텍스트를 비교할 수 있습니다.
 
-향후 발전 방향
+향후 발전 방향:
 
-OpenSMILE 을 이용해서 억양, 피치, 발성 속도 등을 분석하여 개인 코칭이 가능하도록 해야함.
+- OpenSMILE 을 이용해서 억양, 피치, 발성 속도 등을 분석하여 개인 코칭이 가능하도록 해야함.
 
 ## English Quiz Page
 
