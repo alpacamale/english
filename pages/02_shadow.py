@@ -5,9 +5,8 @@ from st_audiorec import st_audiorec
 
 
 @st.cache_data(show_spinner="Loading text ...")
-def load_text(video_id: str) -> list[dict]:
-    video_dir = get_video_dir(video_id)
-    transcript_path = get_transcript_path(video_dir)
+def load_text(base_dir: str) -> list[dict]:
+    transcript_path = get_audio_transcript_path(base_dir)
     loader = TextLoader(transcript_path)
     docs = loader.load()
     parser = VttTimestampOutputParser()
@@ -15,18 +14,17 @@ def load_text(video_id: str) -> list[dict]:
     return parser.parse(text)
 
 
-def select_video():
+def select_video(video_ids: list[str]) -> tuple[str, str]:
     """
     Return video metadata
 
     Returns:
-        - video_id (str): The video id what user selected via name
-        - video_dir (str): The directory path where the video is stored
+        - base_dir (str): The directory path where the video is stored
         - video_path (str): The file path to the video
     """
-    video_names = get_video_names()
-    video_name_map = get_video_name_map()
-    video_name = st.selectbox("Select videos what you want to see", video_names)
+    video_names = get_video_names(video_ids)
+    video_name_map = get_video_name_map(video_ids)
+    video_name = st.selectbox("Select video what you want to see", video_names)
     if video_name != st.session_state["video_name"]:
         st.session_state.update(
             {
@@ -38,9 +36,9 @@ def select_video():
             }
         )
     video_id = video_name_map[video_name]
-    video_dir = get_video_dir(video_id)
-    video_path = get_video_path(video_dir)
-    return video_id, video_dir, video_path
+    base_dir = get_base_dir(video_id)
+    video_path = get_video_path(base_dir)
+    return base_dir, video_path
 
 
 title = "Mocking bird"
@@ -59,13 +57,15 @@ if "initial" not in st.session_state:
             "caption": True,
             "record": False,
             "video_name": None,
+            "button": False,
         }
     )
 
-if get_video_names() == []:
+video_ids = get_video_ids()
+if get_video_names(video_ids) == []:
     st.write("### You need to upload the video first!")
 else:
-    video_id, video_dir, video_path = select_video()
+    base_dir, video_path = select_video(video_ids)
 
     st.video(
         video_path,
@@ -88,7 +88,7 @@ else:
 
     if caption:
         with st.container(border=True, height=200):
-            captions = load_text(video_id)
+            captions = load_text(base_dir)
             for caption in captions:
                 button = st.button(caption["text"], key=caption["start"])
                 if button:
@@ -98,9 +98,17 @@ else:
 
     if record:
         wav_audio_data = st_audiorec()
-        if wav_audio_data is not None:
-            echo_voice_path = get_echo_voice_path(video_dir)
-            with open(echo_voice_path, "wb") as voice:
-                voice.write(wav_audio_data)
+        button = st.button("Transcribe It!")
+        if wav_audio_data is not None and button:
+            with st.status("Loading voice ...") as state:
+                echo_voice_path = get_echo_voice_path(base_dir)
+                with open(echo_voice_path, "wb") as voice:
+                    voice.write(wav_audio_data)
 
-            # echoed_voice = st.audio(wav_audio_data, format="audio/wav")
+                state.update(label="Cut audio in chunks ...")
+                chunks_dir = get_echo_chunk_dir(base_dir)
+                cut_audio_in_chunks(echo_voice_path, chunks_dir)
+
+                state.update(label="Transcribe chunks ...")
+                destination = get_echo_transcript_path(base_dir)
+                transcribe_chunks(base_dir, chunks_dir, destination)
