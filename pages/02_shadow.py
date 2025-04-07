@@ -1,6 +1,7 @@
 import streamlit as st
 from functions import *
 from langchain.document_loaders import TextLoader
+from st_audiorec import st_audiorec
 
 
 @st.cache_data(show_spinner="Loading text ...")
@@ -94,3 +95,12 @@ else:
                     st.session_state["start_time"] = caption["start"]
                     st.session_state["end_time"] = caption["end"]
                     st.rerun()
+
+    if record:
+        wav_audio_data = st_audiorec()
+        if wav_audio_data is not None:
+            echo_voice_path = get_echo_voice_path(video_dir)
+            with open(echo_voice_path, "wb") as voice:
+                voice.write(wav_audio_data)
+
+            # echoed_voice = st.audio(wav_audio_data, format="audio/wav")
