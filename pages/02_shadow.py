@@ -66,7 +66,7 @@ def get_shadow_result(base_dir: str) -> str:
         state.update(label="Compare each speeches ...")
         correction_rate = get_correction_rate(audio_dialog, echo_dialog)
         state.update(label="Done!")
-    return f"Your speech accuracy: {correction_rate}%", audio_dialog, echo_dialog
+    return f"Your speech accuracy: {correction_rate}", audio_dialog, echo_dialog
 
 
 title = "Mocking bird"
@@ -164,3 +164,4 @@ else:
                             "score": False,
                         }
                     )
+                    st.rerun()
