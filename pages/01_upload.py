@@ -7,14 +7,21 @@ video_types = ["mp4", "avi", "mov", "webm"]
 def transcribe_youtube_video(url: str) -> None:
     with st.status("Downloading video ...") as state:
         download_youtube_video(url)
+
         state.update(label="Extract audio from video ...")
         video_id = get_video_id(url)
-        extract_audio_from_video(video_id)
+        base_dir = get_base_dir(video_id)
+        extract_audio_from_video(base_dir)
+
         state.update(label="Cut audio in chunks ...")
-        cut_audio_in_chunks(video_id)
+        source = get_audio_path(base_dir)
+        chunks_dir = get_audio_chunk_dir(base_dir)
+        cut_audio_in_chunks(source, chunks_dir)
+
         state.update(label="Transcribe chunks ...")
-        video_dir = get_video_dir(video_id)
-        transcribe_chunks(video_dir)
+        destination = get_audio_transcript_path(base_dir)
+        transcribe_chunks(base_dir, chunks_dir, destination)
+
         state.update(label="Done!")
 
 
@@ -25,14 +32,22 @@ def transcribe_uploaded_video(video) -> None:
         with open(tmp_path, "wb") as f:
             f.write(video_content)
         video_id = generate_video_id()
-        move_permenent_dir(video.name, video_id)
+        move_to_permenent_dir(video.name, video_id)
+
         state.update(label="Extract audio from video ...")
-        extract_audio_from_video(video_id)
+        base_dir = get_base_dir(video_id)
+        extract_audio_from_video(base_dir)
+
         state.update(label="Cut audio in chunks ...")
-        cut_audio_in_chunks(video_id)
+        source = get_audio_path(base_dir)
+        destination = get_audio_chunk_dir(base_dir)
+        cut_audio_in_chunks(source, destination)
+
         state.update(label="Transcribe chunks ...")
-        video_dir = get_video_dir(video_id)
-        transcribe_chunks(video_dir)
+        chunks_dir = get_audio_chunk_dir(base_dir)
+        destination = get_audio_transcript_path(base_dir)
+        transcribe_chunks(base_dir, chunks_dir, destination)
+
         state.update(label="Done!")
 
 
