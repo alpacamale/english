@@ -11,11 +11,7 @@ STT와 OpenAI Whisper API, LangChain을 이용한 AI 언어 학습 프로그램
 [원예은](https://github.com/yetk124), [박병준](https://github.com/alpacamale), [박지윤](#)
 
 ## Skills
-<img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white"> 
-<img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white">
-<img src="https://img.shields.io/badge/streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white">
-<img src="https://img.shields.io/badge/langChain-1C3C3C?style=for-the-badge&logo=LangChain&logoColor=white">
-<img src="https://img.shields.io/badge/openai-412991?style=for-the-badge&logo=openai&logoColor=white">
+<img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white"> <img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white"><img src="https://img.shields.io/badge/streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white"><img src="https://img.shields.io/badge/langChain-1C3C3C?style=for-the-badge&logo=LangChain&logoColor=white"><img src="https://img.shields.io/badge/openai-412991?style=for-the-badge&logo=openai&logoColor=white">
 
 ## Upload Page
 
