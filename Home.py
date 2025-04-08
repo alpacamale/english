@@ -1,9 +1,7 @@
 import streamlit as st
 from functions import initial_server
 
-initial_server()
-
-title = "Shadow Home"
+title = "Shadowing Study"
 
 st.set_page_config(
     page_icon="🖥️",
@@ -67,7 +65,7 @@ st.markdown(
     """
     <div class="welcome-message">환영합니다, 방문자 여러분! 🌍</div>
     <div class="tech-style">
-    Shadow Home은 재미있는 방식으로 여러분의 영어 실력 향상을 도와주는 AI 기반 앱입니다!
+    Shadow Study는 재미있는 방식으로 여러분의 영어 실력 향상을 도와주는 AI 기반 앱입니다!
     </div>
 """,
     unsafe_allow_html=True,

@@ -5,18 +5,19 @@ import os
 import openai
 import random
 import re
+import pyttsx3
 from dotenv import load_dotenv
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.chains import LLMChain
-
 from functions import (
     get_video_ids, get_video_names,
     get_video_name_map, get_base_dir,
     get_audio_transcript_path,
 )
+
 
 # ✅ 파일 경로 내 특수문자 제거
 def change_path(path: str) -> str:
@@ -78,7 +79,7 @@ def generate_quiz(quiz_chain, sentences, num_questions):
     quiz_data = []
     sentence_idx, attempts = 0, 0
 
-    with st.spinner("🧠 GPT로 퀴즈 생성 중..."):
+    with st.spinner("❔❕ GPT로 퀴즈 생성 중..."):
         while len(quiz_data) < num_questions and attempts < num_questions * 3:
             if sentence_idx >= len(sentences):
                 sentence_idx = 0
