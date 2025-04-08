@@ -10,6 +10,12 @@ STT와 OpenAI Whisper API, LangChain을 이용한 AI 언어 학습 프로그램
 
 [원예은](https://github.com/yetk124), [박병준](https://github.com/alpacamale), [박지윤](#)
 
+## Skills
+<img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white">
+<img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white">
+<img src="https://img.shields.io/badge/streamlit-FF4B4B?style=for-the-badge&logo=github&logoColor=white">
+
+
 ## Upload Page
 
 유저에게 youtube url 혹은 PC로부터 영상을 업로드 받고, Openai Whisper API를 이용해서 Speech-to-Text 기술을 이용해서 vtt 파일을 생성합니다.
