@@ -9,6 +9,11 @@ from langchain.schema.output_parser import BaseOutputParser
 from datetime import timedelta
 import json
 import secrets
+from langchain.document_loaders import TextLoader
+from jiwer import wer
+from langchain.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+import re
 
 
 def initial_server() -> None:
@@ -196,3 +201,63 @@ def move_to_permenent_dir(video_name: str, base_dir: str) -> None:
         with open(f"{base_dir}/meta.json", "w") as f:
             metadata = json.dumps({"title": title})
             f.write(metadata)
+
+
+def get_dialog(base_dir: str) -> tuple[str, str]:
+    audio_path = get_audio_transcript_path(base_dir)
+    echo_path = get_echo_transcript_path(base_dir)
+
+    audio_loader = TextLoader(audio_path)
+    echo_loader = TextLoader(echo_path)
+    audio_docs = audio_loader.load()
+    echo_docs = echo_loader.load()
+    audio_text = audio_docs[0].page_content
+    echo_text = echo_docs[0].page_content
+
+    parser = VttOutputParser()
+    audio_dialog = re.sub(r"[.!?,]", "", parser.parse(audio_text).lower())
+    echo_dialog = re.sub(r"[.!?,]", "", parser.parse(echo_text).lower())
+
+    llm = ChatOpenAI(temperature=0.1, model="gpt-4o-mini")
+    prompt = PromptTemplate.from_template(
+        """
+        You will receive two texts: the original script and the shadowed version spoken by a learner.
+
+        Your task is to split both texts into lists of sentences and align them positionally.
+
+        Important constraints:
+        - The two lists **must be exactly the same length**, as they will be compared using Word Error Rate (WER).
+        - If a sentence from the original script is missing or skipped in the shadowed version, insert an empty string ("") at the correct position in the shadow list.
+        - Do not merge, rephrase, or split sentences arbitrarily. Keep the original sentences exactly as they are.
+        - Maintain the order of the original script.
+
+        Return only valid JSON with the following format:
+        {{
+        "original_sentences": [ ... ],
+        "shadow_sentences": [ ... ]
+        }}
+
+        Do not include any explanations, markdown, or code blocks—return only the raw JSON.
+
+        Original script:
+        {audio}
+
+        Shadowed version:
+        {echo}
+        """
+    )
+    chain = prompt | llm
+    response = chain.invoke({"audio": audio_dialog, "echo": echo_dialog})
+    result = json.loads(response.content)
+    return result["original_sentences"], result["shadow_sentences"]
+
+
+def dialog_to_text(dialog: list[str]) -> str:
+    return "\n\n".join(dialog)
+
+
+def get_correction_rate(audio_dialog: list[str], echo_dialog: list[str]) -> str:
+    correction_rates = []
+    for ref, hyp in zip(audio_dialog, echo_dialog):
+        correction_rates.append(1.0 - wer(ref, hyp))
+    return f"{sum(correction_rates) / len(correction_rates):.2%}"

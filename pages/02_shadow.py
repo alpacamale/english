@@ -1,7 +1,6 @@
 import streamlit as st
 from functions import *
 from langchain.document_loaders import TextLoader
-# from st_audiorec import st_audiorec
 
 
 @st.cache_data(show_spinner="Loading text ...")
@@ -9,8 +8,8 @@ def load_text(base_dir: str) -> list[dict]:
     transcript_path = get_audio_transcript_path(base_dir)
     loader = TextLoader(transcript_path)
     docs = loader.load()
-    parser = VttTimestampOutputParser()
     text = docs[0].page_content
+    parser = VttTimestampOutputParser()
     return parser.parse(text)
 
 
@@ -24,7 +23,7 @@ def select_video(video_ids: list[str]) -> tuple[str, str]:
     """
     video_names = get_video_names(video_ids)
     video_name_map = get_video_name_map(video_ids)
-    video_name = st.selectbox("Select video what you want to see", video_names)
+    video_name = st.selectbox("Select a video you want to see", video_names)
     if video_name != st.session_state["video_name"]:
         st.session_state.update(
             {
@@ -33,12 +32,41 @@ def select_video(video_ids: list[str]) -> tuple[str, str]:
                 "loop": False,
                 "record": False,
                 "video_name": video_name,
+                "transcribe": False,
+                "score": False,
             }
         )
     video_id = video_name_map[video_name]
     base_dir = get_base_dir(video_id)
     video_path = get_video_path(base_dir)
     return base_dir, video_path
+
+
+def transcribe_echo_voice(wav_audio_data, base_dir):
+    with st.status("Loading audio ...") as state:
+        wav_bytes = wav_audio_data.read()
+        echo_voice_path = get_echo_voice_path(base_dir)
+        with open(echo_voice_path, "wb") as voice:
+            voice.write(wav_bytes)
+
+        state.update(label="Splitting audio in chunks ...")
+        chunks_dir = get_echo_chunk_dir(base_dir)
+        cut_audio_in_chunks(echo_voice_path, chunks_dir)
+
+        state.update(label="Transcribing audio chunks ...")
+        destination = get_echo_transcript_path(base_dir)
+        transcribe_chunks(base_dir, chunks_dir, destination)
+
+        state.update(label="Done!")
+
+
+def get_shadow_result(base_dir: str) -> str:
+    with st.status("Transcribeing speech to text ...") as state:
+        audio_dialog, echo_dialog = get_dialog(base_dir)
+        state.update(label="Compare each speeches ...")
+        correction_rate = get_correction_rate(audio_dialog, echo_dialog)
+        state.update(label="Done!")
+    return f"Your speech accuracy: {correction_rate}", audio_dialog, echo_dialog
 
 
 title = "Mocking bird"
@@ -57,7 +85,7 @@ if "initial" not in st.session_state:
             "caption": True,
             "record": False,
             "video_name": None,
-            "button": False,
+            "transcribe": False,
         }
     )
 
@@ -97,19 +125,43 @@ else:
                     st.rerun()
 
     if record:
-        wav_audio_data = st_audiorec()
-        if wav_audio_data:
-            button = st.button("Transcribe It!")
-            if button:
-                with st.status("Loading voice ...") as state:
-                    echo_voice_path = get_echo_voice_path(base_dir)
-                    with open(echo_voice_path, "wb") as voice:
-                        voice.write(wav_audio_data)
-
-                    state.update(label="Cut audio in chunks ...")
-                    chunks_dir = get_echo_chunk_dir(base_dir)
-                    cut_audio_in_chunks(echo_voice_path, chunks_dir)
-
-                    state.update(label="Transcribe chunks ...")
-                    destination = get_echo_transcript_path(base_dir)
-                    transcribe_chunks(base_dir, chunks_dir, destination)
+        wav_audio_data = st.audio_input("Record your voice!")
+        if wav_audio_data is not None:
+            if st.session_state["transcribe"] == False:
+                button = st.button("Transcribe It!")
+                if button:
+                    st.session_state["transcribe"] = True
+                    transcribe_echo_voice(wav_audio_data, base_dir)
+                    st.rerun()
+            elif st.session_state["score"] == False:
+                score_button = st.button(
+                    "Recording complete! Check your score!", key="score_button"
+                )
+                if score_button:
+                    st.session_state["score"] = True
+            else:
+                result, audio_dialog, echo_dialog = get_shadow_result(base_dir)
+                st.warning(result)
+                with st.expander("Compare dialog!") as expand:
+                    audio_transcript_column, echo_transcript_column = st.columns(2)
+                    with audio_transcript_column:
+                        st.write("Original video transcript")
+                        audio_script = dialog_to_text(audio_dialog)
+                        with st.container(height=300):
+                            st.write(audio_script)
+                    with echo_transcript_column:
+                        st.write("Your voice transcript")
+                        echo_script = dialog_to_text(echo_dialog)
+                        with st.container(height=300):
+                            st.write(echo_script)
+                again_button = st.button(
+                    "Re-record your voice and try for a better score!"
+                )
+                if again_button:
+                    st.session_state.update(
+                        {
+                            "transcribe": False,
+                            "score": False,
+                        }
+                    )
+                    st.rerun()
